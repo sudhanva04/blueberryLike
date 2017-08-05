@@ -101,17 +101,38 @@ public class RideRequestServiceImpl implements RideRequestService {
 		List<Cab> queryCabs = new ArrayList<>();
 		GeoResults<Cab> geoCabs;
 		Query query = new Query();
-	//	mongoTemplate.indexOps(Cab.class).ensureIndex(new GeospatialIndex("currentLocation"));
-		LOG.info("check attributes   :{}   :{}", rideRequest.getIsPink());
-		query.addCriteria(Criteria.where("isRideAssigned").is(false).and("isPink").is(rideRequest.getIsPink()));
+		// // mongoTemplate.indexOps(Cab.class).ensureIndex(new
+		// GeospatialIndex("currentLocation"));
+		// LOG.info("check attributes :{} :{}", rideRequest.getIsPink());
+		// query.addCriteria(Criteria.where("isRideAssigned").is(false).and("isPink").is(rideRequest.getIsPink()));
+		// Point point = new
+		// Point(Double.parseDouble(rideRequest.getLatitude()),
+		// Double.parseDouble(rideRequest.getLongitude()));
+		// NearQuery nearQuery = NearQuery.near(point).query(query).num(1);
+		// geoCabs = mongoTemplate.geoNear(nearQuery, Cab.class);
+		// for (GeoResult<Cab> geoResult : geoCabs) {
+		// Cab cab = geoResult.getContent();
+		// queryCabs.add(cab);
+		// }
+
+		// mongoTemplate.indexOps(Cab.class).ensureIndex(new
+		// GeospatialIndex("currentLocation"));
 		Point point = new Point(Double.parseDouble(rideRequest.getLatitude()),
 				Double.parseDouble(rideRequest.getLongitude()));
-		NearQuery nearQuery = NearQuery.near(point).query(query).num(1);
-		geoCabs = mongoTemplate.geoNear(nearQuery, Cab.class);
-		for (GeoResult<Cab> geoResult : geoCabs) {
-			Cab cab = geoResult.getContent();
-			queryCabs.add(cab);
-		}
+		LOG.info("check attributes   :{}   :{}", rideRequest.getIsPink());
+		// query.addCriteria(Criteria.where("isRideAssigned").is(false).and("isPink").is(rideRequest.getIsPink())
+		// .and("location").nearSphere(point));
+		query.addCriteria(Criteria.where("currentLocation").nearSphere(point).maxDistance(50).and("isRideAssigned")
+				.is(false).and("isPink").is(rideRequest.getIsPink()));
+
+		// NearQuery nearQuery = NearQuery.near(point).query(query).num(1);
+		// geoCabs = mongoTemplate.geoNear(nearQuery, Cab.class);
+		// for (GeoResult<Cab> geoResult : geoCabs) {
+		// Cab cab = geoResult.getContent();
+		// queryCabs.add(cab);
+		// }
+		queryCabs = mongoTemplate.find(query, Cab.class);
+
 		if (queryCabs != null && !queryCabs.isEmpty()) {
 			return nearestCab = queryCabs.get(0);
 		} else
