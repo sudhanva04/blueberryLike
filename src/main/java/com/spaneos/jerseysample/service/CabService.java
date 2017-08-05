@@ -10,4 +10,6 @@ public interface CabService {
 	public boolean startTrip(String tripId);
 
 	public StartOrEndTrip endTrip(StartOrEndTrip endTrip);
+
+	public StartOrEndTrip endCurrentTrip(StartOrEndTrip endCurrentTrip);
 }

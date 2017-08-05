@@ -19,7 +19,7 @@ import com.spaneos.jerseysample.domain.StartOrEndTrip;
 import com.spaneos.jerseysample.service.CabService;
 import com.spaneos.jerseysample.service.RideRequestService;
 
-@Path("/requestCar")
+@Path("/")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class RequestEndPoint {
@@ -33,6 +33,7 @@ public class RequestEndPoint {
 	private static final Logger LOG = LoggerFactory.getLogger(RequestEndPoint.class);
 
 	@POST
+	@Path("requestCar")
 	public RideRequest bookRide(RideRequest rideRequest) {
 		LOG.info("inside ride request end point ");
 
@@ -46,14 +47,25 @@ public class RequestEndPoint {
 	}
 
 	@PUT
-	public boolean startTrip(@QueryParam("tripId") String tripId) {
+	@Path("/startTrip")
+	public boolean startTrip(StartOrEndTrip startTrip) {
 		LOG.info("inside start trip end point");
-		return cabService.startTrip(tripId);
+		return cabService.startTrip(startTrip.getTripId());
 	}
 
-//	@PUT
-//	public StartOrEndTrip endTrip(StartOrEndTrip endTrip) {
-//		return cabService.endTrip(endTrip);
-//	}
+	// @PUT
+	// @Path("/endtrip")
+	// public StartOrEndTrip endTrip(StartOrEndTrip endTrip) {
+	// LOG.info("inside end trip end point");
+	// endTrip.setLongitude("85");
+	// return cabService.endTrip(endTrip);
+	// }
+
+	@PUT
+	@Path("/endTrip")
+	public StartOrEndTrip endCurrentTrip(StartOrEndTrip endCurrentTrip) {
+		LOG.info("longitude   :{}", endCurrentTrip.getLongitude());
+		return cabService.endCurrentTrip(endCurrentTrip);
+	}
 
 }

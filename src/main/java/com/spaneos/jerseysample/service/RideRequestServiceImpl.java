@@ -52,16 +52,16 @@ public class RideRequestServiceImpl implements RideRequestService {
 			if (freeCab != null) {
 				Cab nearestCab;
 				nearestCab = getNearestCab(rideRequest);
-				rideRequest.setSuccess(true);
-				rideRequest.setDriverId(nearestCab.getDriverId());
-				// rideRequest.setTripId("123");
-				rideRequest.setRequestTime(LocalTime.now());
-				rideRequest.setTripId(String.format("%04d", new Random().nextInt(10000)));
 
 				if (nearestCab != null) {
+					rideRequest.setSuccess(true);
+					rideRequest.setDriverId(nearestCab.getDriverId());
+					// rideRequest.setTripId("123");
+					rideRequest.setRequestTime(LocalTime.now());
+					rideRequest.setTripId(String.format("%04d", new Random().nextInt(10000)));
 					RideInfo rideInfo = new RideInfo();
 					rideRequest.setSuccess(true);
-					rideRequest.setDriverId(nearestCab.getId());
+					rideRequest.setDriverId(nearestCab.getDriverId());
 					rideRequest.setLocation(new Double[] { Double.parseDouble(rideRequest.getLatitude()),
 							Double.parseDouble(rideRequest.getLongitude()) });
 					rideRequest.setMessage("request successful");
@@ -101,11 +101,12 @@ public class RideRequestServiceImpl implements RideRequestService {
 		List<Cab> queryCabs = new ArrayList<>();
 		GeoResults<Cab> geoCabs;
 		Query query = new Query();
+	//	mongoTemplate.indexOps(Cab.class).ensureIndex(new GeospatialIndex("currentLocation"));
 		LOG.info("check attributes   :{}   :{}", rideRequest.getIsPink());
 		query.addCriteria(Criteria.where("isRideAssigned").is(false).and("isPink").is(rideRequest.getIsPink()));
 		Point point = new Point(Double.parseDouble(rideRequest.getLatitude()),
 				Double.parseDouble(rideRequest.getLongitude()));
-		NearQuery nearQuery = NearQuery.near(point).maxDistance(50).query(query).num(1);
+		NearQuery nearQuery = NearQuery.near(point).query(query).num(1);
 		geoCabs = mongoTemplate.geoNear(nearQuery, Cab.class);
 		for (GeoResult<Cab> geoResult : geoCabs) {
 			Cab cab = geoResult.getContent();

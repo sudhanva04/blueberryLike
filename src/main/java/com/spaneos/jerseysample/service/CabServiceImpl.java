@@ -96,11 +96,15 @@ public class CabServiceImpl implements CabService {
 
 	@Override
 	public StartOrEndTrip endTrip(StartOrEndTrip endTrip) {
-		if (endTrip.getTripId() != null && endTrip.getLatitude() != null && endTrip.getLongituide() != null) {
+		LOG.info("inside end trip serice   :{}", endTrip.getLongitude());
+		if (endTrip.getTripId() != null && endTrip.getLatitude() != null && endTrip.getLongitude() != null) {
 			RideInfo rideInfo = rideInfoRepository.findByTripId(endTrip.getTripId());
 			Objects.requireNonNull(rideInfo, " could not find ride information");
-			rideInfo.setDestination(new Double[] { Double.parseDouble(endTrip.getLatitude()),
-					Double.parseDouble(endTrip.getLongituide()) });
+			Double[] destination = { 25.0, 35.0 };
+
+			LOG.info("destination alue  :{}", destination[1]);
+			rideInfo.setDestination(new Double[] { 25.0, 35.0 });
+			LOG.info("rideinfo destination   :{}", rideInfo.getDestination().toString());
 			endTrip.setTimeElapsed(MINUTES.between(rideInfo.getStartTime(), LocalTime.now()));
 			endTrip.setDistance(calculateDistance(rideInfo.getPickupLocation(), rideInfo.getDestination()));
 			if (rideInfo.getIsPink()) {
@@ -118,9 +122,10 @@ public class CabServiceImpl implements CabService {
 		return endTrip;
 	}
 
-	private void updateEndTripDetailsToRideInfoAndCab(StartOrEndTrip endTrip, RideInfo rideInfo) {
+	private void updateEndTripDetailsToRideInfoAndCab(StartOrEndTrip endCurrentTrip, RideInfo rideInfo) {
+		LOG.info("inside update end trip details   :{}", rideInfo.getDestination());
 		rideInfo.setEndTime(LocalTime.now());
-		rideInfo.setDistance(Double.parseDouble(endTrip.getDistance()));
+		rideInfo.setDistance(Double.parseDouble(endCurrentTrip.getDistance()));
 		Cab cab = cabRepository.findByDriverId(rideInfo.getDriverId());
 		cab.setCurrentLocation(rideInfo.getDestination());
 		cab.setIsRideAssigned(false);
@@ -129,9 +134,57 @@ public class CabServiceImpl implements CabService {
 	}
 
 	private String calculateDistance(Double[] pickupLocation, Double[] destination) {
+		LOG.info("inside calc distance");
 		Double shortestDist = Math.sqrt(
 				Math.pow(pickupLocation[0] - destination[0], 2) + Math.pow(pickupLocation[1] - destination[1], 2));
 		return shortestDist.toString();
+	}
+
+	@Override
+	public StartOrEndTrip endCurrentTrip(StartOrEndTrip endCurrentTrip) {
+		if (endCurrentTrip.getTripId() != null && endCurrentTrip.getLatitude() != null
+				&& endCurrentTrip.getLongitude() != null) {
+			RideInfo rideInfo = rideInfoRepository.findByTripId(endCurrentTrip.getTripId());
+			Objects.requireNonNull(rideInfo, " could not find ride information");
+			rideInfo.setDestination(new Double[] { Double.parseDouble(endCurrentTrip.getLongitude()),
+					Double.parseDouble(endCurrentTrip.getLatitude()) });
+			endCurrentTrip.setTimeElapsed(MINUTES.between(rideInfo.getStartTime(), LocalTime.now()));
+			endCurrentTrip.setDistance(calculateDistance(rideInfo.getPickupLocation(), rideInfo.getDestination()));
+
+			if (rideInfo.getIsPink()) {
+				endCurrentTrip.setPinkCharge(5.0);
+			} else {
+				endCurrentTrip.setPinkCharge(0.0);
+			}
+			endCurrentTrip.setTripFare((Double.parseDouble(endCurrentTrip.getDistance()) * 2)
+					+ endCurrentTrip.getTimeElapsed() + endCurrentTrip.getPinkCharge());
+			// updateEndTripDetailsToRideInfoAndCab(endCurrentTrip, rideInfo);
+
+			rideInfo.setEndTime(LocalTime.now());
+			rideInfo.setDistance(Double.parseDouble(endCurrentTrip.getDistance()));
+			Cab currentCab = cabRepository.findByDriverId(rideInfo.getDriverId());
+			// currentCab.setCurrentLocation(rideInfo.getDestination());
+			// currentCab.setIsRideAssigned(false);
+			rideInfoRepository.save(rideInfo);
+			updateCabDetails(rideInfo);
+			// cabRepository.save(currentCab);
+
+		} else {
+			endCurrentTrip.setSuccess(false);
+			endCurrentTrip.setMessage("Please enter required details");
+		}
+
+		// TODO Auto-generated method stub
+		return endCurrentTrip;
+	}
+
+	public void updateCabDetails(RideInfo rideInfo) {
+		Cab dbCab;
+		LOG.info("inside update cab");
+		dbCab = cabRepository.findByDriverId(rideInfo.getDriverId());
+		dbCab.setIsRideAssigned(false);
+		dbCab.setCurrentLocation(rideInfo.getDestination());
+		cabRepository.save(dbCab);
 	}
 
 }
